@@ -1,34 +1,35 @@
-# TaskFlow — Team Task Manager
+# TRACKER — Team Task Manager
 
-A full-stack collaborative task management application. Multiple users can create projects, assign tasks, and track progress — with role-based access (Admin / Member).
+A full-stack collaborative task management app. Teams can create projects, assign tasks, and track progress with role-based access (Admin / Member).
 
 ## Live Demo
-- Frontend: `https://your-frontend.railway.app`
-- Backend API: `https://your-backend.railway.app`
+- **App:** https://frontend-production-cf71.up.railway.app
+- **API Health:** https://backend-production-79ad9.up.railway.app/api/health
 
 ---
 
 ## Tech Stack
 
-| Layer      | Technology               |
-|------------|--------------------------|
-| Frontend   | React 18 + Vite          |
-| Backend    | Node.js + Express        |
-| Database   | PostgreSQL               |
-| Auth       | JWT (7-day expiry)       |
-| Deployment | Railway                  |
+| Layer      | Technology                        |
+|------------|-----------------------------------|
+| Frontend   | React 18 + Vite + Inter/Space Grotesk |
+| Backend    | Node.js + Express                 |
+| Database   | PostgreSQL                        |
+| Auth       | JWT (7-day expiry)                |
+| Deployment | Railway (3 services)              |
 
 ---
 
 ## Features
 
-- **Authentication** — JWT-based signup/login
-- **Projects** — Create projects; creator is Admin
-- **Role-Based Access** — Admins manage everything; Members update assigned tasks only
-- **Tasks** — Title, description, due date, priority (low/medium/high), status (To Do / In Progress / Done)
-- **Kanban Board** — Visual 3-column board per project
-- **Dashboard** — Per-project stats: totals, status breakdown, per-user progress, overdue count
-- **Member Management** — Admin can add/remove members by email
+- **Authentication** — JWT-based signup / login
+- **Projects** — Create projects; creator becomes Admin automatically
+- **Role-Based Access** — Admins manage everything; Members update their assigned tasks
+- **Tasks** — Title, description, due date, priority (low / medium / high), status (To Do / In Progress / Done)
+- **Kanban Board** — Visual 3-column board per project with filter pills
+- **Dashboard** — Per-project stats: totals, status breakdown, overall progress bar, per-user progress, overdue count
+- **Member Management** — Admin can add / remove members by email
+- **Modern UI** — Dark glassmorphism design, smooth animations, gradient accents
 
 ---
 
@@ -40,7 +41,7 @@ A full-stack collaborative task management application. Multiple users can creat
 
 ### 1. Clone
 ```bash
-git clone https://github.com/YOUR_USERNAME/team-task-manager.git
+git clone https://github.com/Hxrsh01/Team-Task-Manager.git
 cd team-task-manager
 ```
 
@@ -48,12 +49,12 @@ cd team-task-manager
 ```bash
 cd backend
 cp .env.example .env
-# Fill in DATABASE_URL and JWT_SECRET in .env
+# Fill in DATABASE_URL and JWT_SECRET
 npm install
 npm run dev
 ```
 
-Backend runs on `http://localhost:5000`. Schema is auto-created on first start.
+Runs on `http://localhost:5000`. DB schema is auto-created on first start.
 
 ### 3. Frontend
 ```bash
@@ -64,34 +65,48 @@ npm install
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173`.
+Runs on `http://localhost:5173`.
 
 ---
 
-## Deployment on Railway
+## Deployment (Railway)
 
-### Step 1 — Create Railway project
-1. Go to [railway.app](https://railway.app) and create a new project
-2. Add a **PostgreSQL** plugin — copy the `DATABASE_URL`
+This project is deployed as **3 Railway services** in a single project:
 
-### Step 2 — Deploy Backend
-1. Add a new service → **GitHub repo** → select `backend/` folder (or set root directory)
-2. Set environment variables:
-   ```
-   DATABASE_URL=<from Railway PostgreSQL>
-   JWT_SECRET=<random 32+ char string>
-   NODE_ENV=production
-   FRONTEND_URL=https://your-frontend.railway.app
-   ```
-3. Railway will auto-deploy. Note your backend URL.
+| Service    | Description                        |
+|------------|------------------------------------|
+| `Postgres`  | Managed PostgreSQL database        |
+| `backend`   | Express API, auto-inits DB schema  |
+| `frontend`  | React app served via `serve`       |
 
-### Step 3 — Deploy Frontend
-1. Add another service → GitHub repo → select `frontend/` folder
-2. Set environment variables:
-   ```
-   VITE_API_URL=https://your-backend.railway.app/api
-   ```
-3. Deploy. Visit your frontend URL.
+### Environment Variables
+
+**Backend service:**
+```
+NODE_ENV=production
+DATABASE_URL=<Railway Postgres URL>
+JWT_SECRET=<random 32+ char string>
+FRONTEND_URL=https://your-frontend.up.railway.app
+```
+
+**Frontend service:**
+```
+VITE_API_URL=https://your-backend.up.railway.app/api
+```
+
+### Deploy via CLI
+```bash
+npm install -g @railway/cli
+railway login
+railway init
+railway add --database postgres
+railway add --service backend
+railway add --service frontend
+
+# Set env vars, then deploy each service:
+railway up --service backend  --path-as-root backend
+railway up --service frontend --path-as-root frontend
+```
 
 ---
 
@@ -102,26 +117,26 @@ Frontend runs on `http://localhost:5173`.
 |--------|----------|-------------|
 | POST | `/api/auth/signup` | Register |
 | POST | `/api/auth/login` | Login |
-| GET | `/api/auth/me` | Get current user |
+| GET  | `/api/auth/me` | Get current user |
 
 ### Projects
 | Method | Endpoint | Description | Role |
 |--------|----------|-------------|------|
-| GET | `/api/projects` | My projects | Any |
-| POST | `/api/projects` | Create project | Any |
-| GET | `/api/projects/:id` | Project detail | Member+ |
+| GET    | `/api/projects` | My projects | Any |
+| POST   | `/api/projects` | Create project | Any |
+| GET    | `/api/projects/:id` | Project detail | Member+ |
 | DELETE | `/api/projects/:id` | Delete project | Admin |
-| POST | `/api/projects/:id/members` | Add member | Admin |
+| POST   | `/api/projects/:id/members` | Add member | Admin |
 | DELETE | `/api/projects/:id/members/:userId` | Remove member | Admin |
 
 ### Tasks
 | Method | Endpoint | Description | Role |
 |--------|----------|-------------|------|
-| GET | `/api/projects/:id/tasks` | List tasks | Member+ |
-| POST | `/api/projects/:id/tasks` | Create task | Admin |
-| PUT | `/api/projects/:id/tasks/:taskId` | Update task | Admin / Assigned |
+| GET    | `/api/projects/:id/tasks` | List tasks | Member+ |
+| POST   | `/api/projects/:id/tasks` | Create task | Admin |
+| PUT    | `/api/projects/:id/tasks/:taskId` | Update task | Admin / Assigned |
 | DELETE | `/api/projects/:id/tasks/:taskId` | Delete task | Admin |
-| GET | `/api/projects/:id/dashboard` | Stats | Member+ |
+| GET    | `/api/projects/:id/dashboard` | Stats | Member+ |
 
 ---
 
@@ -133,8 +148,8 @@ team-task-manager/
 │   ├── src/
 │   │   ├── config/
 │   │   │   ├── db.js           # PostgreSQL connection pool
-│   │   │   ├── schema.sql      # Database schema
-│   │   │   └── initDB.js       # Auto-runs schema on startup
+│   │   │   ├── schema.sql      # Database schema (auto-applied)
+│   │   │   └── initDB.js       # Runs schema on startup with retry
 │   │   ├── controllers/
 │   │   │   ├── authController.js
 │   │   │   ├── projectController.js
@@ -147,24 +162,26 @@ team-task-manager/
 │   │   │   └── tasks.js
 │   │   └── server.js
 │   ├── .env.example
+│   ├── railway.toml
 │   └── package.json
 └── frontend/
     ├── src/
-    │   ├── components/
-    │   │   └── layout/Layout.jsx
+    │   ├── components/layout/
+    │   │   └── Layout.jsx       # Sidebar + outlet
     │   ├── context/
     │   │   └── AuthContext.jsx  # Global auth state
     │   ├── pages/
     │   │   ├── Login.jsx
     │   │   ├── Signup.jsx
-    │   │   ├── Dashboard.jsx    # Project list + stats
-    │   │   └── ProjectView.jsx  # Kanban + members + dashboard
+    │   │   ├── Dashboard.jsx    # Project grid + stats
+    │   │   └── ProjectView.jsx  # Kanban + dashboard + members
     │   ├── utils/
     │   │   └── api.js           # Axios with JWT interceptors
     │   ├── App.jsx
     │   ├── main.jsx
-    │   └── index.css
+    │   └── index.css            # Design system (CSS vars, components)
     ├── .env.example
+    ├── railway.toml
     └── package.json
 ```
 
@@ -173,19 +190,21 @@ team-task-manager/
 ## Database Schema
 
 ```sql
-users           — id, name, email, password (hashed), created_at
+users           — id, name, email, password (bcrypt), created_at
 projects        — id, name, description, created_by → users, created_at
 project_members — project_id, user_id, role (admin|member)
 tasks           — id, title, description, project_id, assigned_to, created_by,
                   status (todo|in_progress|done), priority (low|medium|high),
-                  due_date, created_at, updated_at
+                  due_date, created_at, updated_at (auto-updated via trigger)
 ```
 
 ---
 
-## Security Notes
+## Security
+
 - Passwords hashed with bcryptjs (12 rounds)
 - JWT tokens expire in 7 days
 - All routes require authentication except `/auth/signup` and `/auth/login`
 - Role checks enforced on every mutating endpoint
 - SQL injection protected via parameterized queries (`pg` driver)
+- CORS restricted to `FRONTEND_URL` in production
